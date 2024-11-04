@@ -1,13 +1,21 @@
 const express = require("express");
 const app = express();
 const path = require("path");
-const PORT = 8000;
-
+const multer = require("multer");
+const PORT = 8080;
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-
-let isLoggedIn = false; // Simulate login status
+app.use('/uploads', express.static('public/uploads'));
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/uploads');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({storage: storage});
 
 let tasks = [];
 let products = [
@@ -18,17 +26,25 @@ let products = [
     {"id": 5, "name": "Ipad", "price": 68000},
 ];
 let users = [
-    {"name": "Sam", "age": 23, "hobby": "Coin collecting"},
+    {"name": "ramu", "age": 23, "hobby": "mma"},
     {"name": "John", "age": 27, "hobby": "Knives"},
-    {"name": "Winston", "age": 53, "hobby": "Guns"},
+    {"name": "jonwa", "age": 53, "hobby": "Guns"},
     {"name": "Barney", "age": 42, "hobby": "Wine"},
-    {"name": "Luke", "age": 77, "hobby": "Stamp collecting"},
+    {"name": "Lukas", "age": 17, "hobby": "psychedlics"},
 ];
 let searchList = [
-    {"name": "books", "items": ["JJK VOL 1", "Highschool dxd volume 15", "Highschool of the dead vol 1", "The Silent Patient", "The Picture of Dorian Gray"]},
-    {"name": "movies", "items": ["Interstellar", "Not Another Teen Movie", "Inception", "The Dark Knight", "The Dictator"]},
-    {"name": "tv", "items": ["Rick and Morty", "Breaking Bad", "Prison Break", "Inception", "Lucifer"]},
+    {"name": "books", "items": ["Highschool dxd", "overflow", "The Interview", "The Silent Patient", "The Picture of Dorian Gray"]},
+    {"name": "movies", "items": ["Fast and the Furious", "Shutter Island", "Inception", "The Dark Knight", "Transformers one"]},
+    {"name": "tv", "items": ["ozark", "how to sell drugs online(fast)", "Prison Break", "Breaking Bad", "Lucifer"]},
 ];
+let catalog = [
+    {"name": "TV", "description": "It is a 4K OLED TV. It is priced at 449,979.", "image": "in-oled-s90c-458654-qa77s90caklxl-536865425.avif"},
+    {"name": "GalaxyBook 4 Pro", "description": "Samsung's latest laptop with cutting edge technology. It is priced at 140000", "image" : "download.jpeg"}
+]
+let posts = [];
+let contacts = [];
+let isLoggedIn = false;
+let currUser = null;
 
 function time(){
     const hour = new Date().getHours();
@@ -41,10 +57,9 @@ function time(){
 app.get("/welcome", (req, res) => {
     let name = "John";
     let good = time();
-    res.render('welcome', {name, good, isLoggedIn});
+    res.render('welcome', {name, good});
 });
 
-// Task-related routes
 app.post("/add-task", (req, res) => {
     const newTask = req.body.task;
     if(newTask) tasks.push(newTask);
@@ -60,10 +75,9 @@ app.post("/delete-task/:id", (req, res) => {
 });
 
 app.get("/todo", (req, res) => {
-    res.render('todo', {tasks, isLoggedIn});
+    res.render('todo', {tasks});
 });
 
-// Product-related routes
 app.get("/products", (req, res) => {
     const searchQuery = req.query.search;
     let productSearch = products;
@@ -72,18 +86,16 @@ app.get("/products", (req, res) => {
             product.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }
-    res.render('products', {products: productSearch, isLoggedIn});
+    res.render('products', {products: productSearch});
 });
 
-// User profile route
 app.get("/profile/:username", (req, res) => {
     const username = req.params.username;
     const user = users.find(u => u.name.toLowerCase() === username.toLowerCase());
-    if(user) res.render('profile', {user, isLoggedIn});
+    if(user) res.render('profile', {user});
     else res.status(404).send("User not found");
 });
 
-// Search-related routes
 app.get("/search", (req, res) =>{
     const searchQuery = req.query.q;
     let searchRes = [];
@@ -92,18 +104,88 @@ app.get("/search", (req, res) =>{
             item.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }
-    res.render('search', {searchQuery, searchRes, isLoggedIn});
+    res.render('search', {searchQuery, searchRes});
 });
 
-// Toggle login status
+app.get("/posts", (req, res) => {
+    res.render('posts', {posts});
+});
+
+app.post("/posts", (req, res) => {
+    const {title, body} = req.body;
+    if(title && body) posts.push({title, body});
+    res.redirect("/posts");
+});
+
+app.get("/posts/:title", (req, res) => {
+    const title = req.params.title;
+    const post = posts.find(p => p.title === title);
+    if(post) res.render('postDetail', {post});
+    else res.status(404).send("Post not found");
+});
+
+app.get("/contact", (req, res) => {
+    res.render('contact', {errors: [], formData: {}, submitted: false});
+});
+
+app.post("/contact", (req, res) => {
+    const {name, email, message} = req.body;
+    let errors = [];
+
+    if(!name) errors.push("Name is required");
+    if(!email) errors.push("Email is required");
+    if(!message) errors.push("Message is required");
+    if(errors.length > 0) res.render('contact', { errors, formData: { name, email, message }, submitted: false });
+    else{
+        contacts.push({ name, email, message });
+        res.render('contact', { errors: [], formData: { name, email, message }, submitted: true });
+    }
+});
+
+app.get("/catalog", (req, res) => {
+    res.render('catalog', {catalog});
+});
+
+app.post("/catalog", upload.single('image'), (req, res) => {
+    const {name, description} = req.body;
+    const image = req.file ? req.file.filename : null;
+    if (name && description && image) catalog.push({name, description, image});
+    res.redirect("/catalog");
+});
+
+app.get("/", (req, res) => {
+    res.redirect("/nav");
+});
+
+app.get("/nav", (req, res) => {
+    res.render('nav', {isLoggedIn, currUser});
+});
+
+app.get("/profile", (req, res) => {
+    if (isLoggedIn && currUser) {
+        res.send(`<h1>Profile Page</h1><p>Welcome, ${currUser}!</p>`);
+    } else {
+        res.redirect("/login");
+    }
+});
+
 app.get("/login", (req, res) => {
-    isLoggedIn = true;
-    res.redirect("/");
+    res.render('login');
 });
 
-app.get("/logout", (req, res) => {
+app.post("/login", (req, res) => {
+    const{username} = req.body;
+    if(username){
+        isLoggedIn = true;
+        currUser = username;
+    }
+    res.redirect("/nav");
+});
+
+app.post("/logout", (req, res) => {
     isLoggedIn = false;
-    res.redirect("/");
+    currUser = null;
+    res.redirect("/nav");
 });
 
 app.listen(PORT, (err) => {
