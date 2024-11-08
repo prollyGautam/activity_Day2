@@ -1,0 +1,122 @@
+1. Find Products in Price Range and in Stock:
+    db.products.find({
+    price: { $gte: 20, $lte: 100 },
+    stock: { $gt: 0 }
+})
+
+
+2.Qualified Students for Scholarship:
+
+db.students.find({
+    $or: [
+        { grade: { $gt: 85 } },
+        { attendance: { $gt: 90 } },
+        { age: { $lt: 18 } }
+    ]
+})
+
+
+3.Filter Jobs by Salary and Location:db.jobs.insertMany([
+...     { title: "Software Engineer", salary: 120000, location: "New York" },
+...     { title: "Data Scientist", salary: 95000, location: "San Francisco" },
+...     { title: "Product Manager", salary: 110000, location: "New York" },
+...     { title: "UX Designer", salary: 70000, location: "San Francisco" },
+...     { title: "Backend Developer", salary: 65000, location: "Austin" },
+...     { title: "Sales Manager", salary: 80000, location: "Chicago" },
+...     { title: "Marketing Specialist", salary: 60000, location: "New York" }
+... ])
+
+db.jobs.find({
+    salary: { $gt: 50000 },
+    location: { $in: ["New York", "San Francisco"] }
+})
+
+
+4.Available Electronics with Discount:db.inventory.insertMany([
+...     { name: "Smartphone", category: "electronics", discount: 15, stock: 50 },
+...     { name: "Laptop", category: "electronics", discount: 10, stock: 30 },
+...     { name: "Bluetooth Speaker", category: "electronics", discount: 5, stock: 20 },
+...     { name: "Tablet", category: "electronics", discount: 20, stock: 10 },
+...     { name: "TV", category: "electronics", discount: 25, stock: 5 },
+...     { name: "Headphones", category: "accessories", discount: 10, stock: 40 },
+...     { name: "Smartwatch", category: "electronics", discount: 0, stock: 15 }
+... ])
+
+db.inventory.find({
+    category: "electronics",
+    discount: { $gte: 10 },
+    stock: { $gt: 0 }
+})
+
+
+5.Identify Pending Orders for VIP Customers:
+
+
+
+
+6.Find Students Exceeding Both Age and Grade Limits:
+
+db.students.find({
+    $or: [
+        { $and: [{ age: { $gt: 18 } }, { grade: { $lt: 60 } }] },
+        { attendance: { $lt: 75 } }
+    ]
+})
+
+
+7.
+db.products.insertMany([
+    { name: "Dining Table", category: "furniture", price: 150, stock: 3 },
+    { name: "Sofa", category: "furniture", price: 500, stock: 10 },
+    { name: "Bookshelf", category: "furniture", price: 80, stock: 2 },
+    { name: "Chair", category: "furniture", price: 50, stock: 7 },
+    { name: "Coffee Table", category: "furniture", price: 180, stock: 4 }
+])
+
+Special Offers on Furniture: db.products.find({
+    category: "furniture",
+    $or: [
+        { price: { $lt: 200 } },
+        { stock: { $lt: 5 } }
+    ]
+})
+
+
+8. db.items.insertMany([
+    { name: "Antivirus Software", type: "software", price: 50 },
+    { name: "VPN Subscription", type: "service", price: 30 },
+    { name: "Cloud Storage", type: "service", price: 80 },
+    { name: "Photo Editing Software", type: "software", price: 120 },
+    { name: "SEO Consultation", type: "service", price: 90 }
+])
+
+
+Available Software and Services:  db.items.find({
+    type: { $in: ["software", "service"] },
+    price: { $lt: 100 }
+})
+
+
+9. db.employees.insertMany([
+    { name: "Dhanji", experience: 6, department: "Engineering" },
+    { name: "Boby", experience: 4, department: "HR" },
+    { name: "Siyaahi", experience: 10, department: "Sales" },
+    { name: "Claudia", experience: 8, department: "Engineering" },
+    { name: "Eve", experience: 7, department: "HR" }
+])
+
+Filter Employees by Experience or Department:  db.employees.find({
+    experience: { $gt: 5 },
+    department: { $in: ["Engineering", "HR"] }
+})
+
+
+10.Urgent Orders for High-Value Products:
+
+db.orders.find({
+    $or: [
+        { $and: [{ status: "urgent" }, { total_amount: { $gt: 1000 } }] },
+        { priority: "high" }
+    ]
+})
+
